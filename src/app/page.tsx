@@ -1,65 +1,169 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import type { Wachtdienst } from "@/lib/types";
+
+export default function Dashboard() {
+  const [diensten, setDiensten] = useState<Wachtdienst[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/wachtdiensten")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setDiensten(data);
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Bepaal actieve diensten (meest recente per type)
+  function getActief(type: "Garage" | "App") {
+    const items = diensten
+      .filter((d) => d.DienstType === type)
+      .sort((a, b) => new Date(b.StartDatum).getTime() - new Date(a.StartDatum).getTime());
+
+    const nu = new Date();
+    return items.find((d) => new Date(d.StartDatum) <= nu) || items[0] || null;
+  }
+
+  function getVolgende(type: "Garage" | "App") {
+    const nu = new Date();
+    return diensten
+      .filter((d) => d.DienstType === type && new Date(d.StartDatum) > nu)
+      .sort((a, b) => new Date(a.StartDatum).getTime() - new Date(b.StartDatum).getTime())[0] || null;
+  }
+
+  const garageActief = getActief("Garage");
+  const appActief = getActief("App");
+  const garageVolgende = getVolgende("Garage");
+  const appVolgende = getVolgende("App");
+
+  function formatDatum(datum: string) {
+    const d = new Date(datum);
+    const dag = String(d.getDate()).padStart(2, "0");
+    const maand = String(d.getMonth() + 1).padStart(2, "0");
+    const jaar = d.getFullYear();
+    const uur = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const weekdagen = ["zo", "ma", "di", "wo", "do", "vr", "za"];
+    return `${weekdagen[d.getDay()]} ${dag}/${maand}/${jaar} ${uur}:${min}`;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      {/* Hero */}
+      <div className="bg-gradient-to-br from-brand-900 via-brand-700 to-brand-600 rounded-xl p-8 mb-8 text-white">
+        <h1 className="text-3xl font-bold mb-2">Wachtdienst Planner <span className="bg-accent text-brand-900 text-sm font-bold px-2 py-1 rounded ml-2">TEST/DEMO</span></h1>
+        <p className="text-white/80 text-lg">
+          Overzicht van de actieve garage en app wachtdiensten
+        </p>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12 text-[var(--text-muted)]">Laden...</div>
+      ) : (
+        <>
+          {/* Actieve diensten */}
+          <h2 className="text-xl font-bold text-brand-900 mb-4">Actieve Wachtdiensten</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            {/* Garage */}
+            <div className="card border-l-4 border-l-brand-600">
+              <div className="flex items-center justify-between mb-3">
+                <span className="badge-garage">Garage</span>
+                {garageActief && <span className="badge-actief">Actief</span>}
+              </div>
+              {garageActief ? (
+                <>
+                  <p className="text-2xl font-bold font-mono text-brand-900 mb-1">
+                    {garageActief.Telefoonnummer}
+                  </p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {garageActief.ContactNaam && (
+                      <span className="font-medium text-[var(--foreground)]">
+                        {garageActief.ContactNaam} &mdash;{" "}
+                      </span>
+                    )}
+                    Sinds {formatDatum(garageActief.StartDatum)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[var(--text-muted)]">Geen actieve dienst</p>
+              )}
+            </div>
+
+            {/* App */}
+            <div className="card border-l-4 border-l-accent">
+              <div className="flex items-center justify-between mb-3">
+                <span className="badge-app">App</span>
+                {appActief && <span className="badge-actief">Actief</span>}
+              </div>
+              {appActief ? (
+                <>
+                  <p className="text-2xl font-bold font-mono text-brand-900 mb-1">
+                    {appActief.Telefoonnummer}
+                  </p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {appActief.ContactNaam && (
+                      <span className="font-medium text-[var(--foreground)]">
+                        {appActief.ContactNaam} &mdash;{" "}
+                      </span>
+                    )}
+                    Sinds {formatDatum(appActief.StartDatum)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[var(--text-muted)]">Geen actieve dienst</p>
+              )}
+            </div>
+          </div>
+
+          {/* Volgende diensten */}
+          <h2 className="text-xl font-bold text-brand-900 mb-4">Eerstvolgende Wijzigingen</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+            <div className="card">
+              <span className="badge-garage mb-2">Garage</span>
+              {garageVolgende ? (
+                <>
+                  <p className="font-semibold mt-2">
+                    {garageVolgende.ContactNaam || garageVolgende.Telefoonnummer}
+                  </p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {formatDatum(garageVolgende.StartDatum)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
+              )}
+            </div>
+            <div className="card">
+              <span className="badge-app mb-2">App</span>
+              {appVolgende ? (
+                <>
+                  <p className="font-semibold mt-2">
+                    {appVolgende.ContactNaam || appVolgende.Telefoonnummer}
+                  </p>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    {formatDatum(appVolgende.StartDatum)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
+              )}
+            </div>
+          </div>
+
+          {/* Quick links */}
+          <div className="flex flex-wrap gap-3">
+            <Link href="/wachtdiensten" className="btn-primary">
+              Planning Beheren
+            </Link>
+            <Link href="/contacten" className="btn-cta">
+              Contacten Beheren
+            </Link>
+          </div>
+        </>
+      )}
     </div>
   );
 }

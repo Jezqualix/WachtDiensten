@@ -1,26 +1,96 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
+  --color-brand-50: #e8f5ee;
+  --color-brand-100: #c3e6d0;
+  --color-brand-200: #8dcbaa;
+  --color-brand-300: #52ae7e;
+  --color-brand-400: #00995a;
+  --color-brand-500: #00a040;
+  --color-brand-600: #007c30;
+  --color-brand-700: #026c3d;
+  --color-brand-800: #005526;
+  --color-brand-900: #003012;
+
+  --color-accent: #ffdd00;
+  --color-accent-hover: #e6c800;
+  --color-accent-light: #fff8cc;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #f3f3f3;
+  --foreground: #494949;
+  --text-muted: #616161;
+  --border: #d6d6d6;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: var(--color-brand-600); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-brand-700); }
+
+/* CTA Button */
+.btn-cta {
+  @apply bg-accent text-brand-900 font-bold hover:bg-accent-hover px-6 py-3 rounded-md transition-colors cursor-pointer;
+}
+
+.btn-primary {
+  @apply bg-brand-600 text-white font-semibold hover:bg-brand-700 px-4 py-2 rounded-md transition-colors cursor-pointer;
+}
+
+.btn-secondary {
+  @apply bg-white text-brand-700 font-semibold border border-brand-600 hover:bg-brand-50 px-4 py-2 rounded-md transition-colors cursor-pointer;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white font-semibold hover:bg-red-700 px-4 py-2 rounded-md transition-colors cursor-pointer;
+}
+
+/* Card */
+.card {
+  @apply bg-white rounded-lg border border-[var(--border)] shadow-sm p-6;
+}
+
+/* Input */
+.input {
+  @apply w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-transparent;
+}
+
+/* Select */
+.select {
+  @apply w-full rounded-md border border-[var(--border)] px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-brand-600 focus:border-transparent;
+}
+
+/* Label */
+.label {
+  @apply block text-sm font-medium text-[var(--foreground)] mb-1;
+}
+
+/* Badge */
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.badge-garage {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-brand-100 text-brand-800;
+}
+
+.badge-app {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-accent-light text-brand-900;
+}
+
+.badge-actief {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-green-100 text-green-800;
 }
