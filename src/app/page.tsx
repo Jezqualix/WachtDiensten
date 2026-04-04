@@ -161,6 +161,9 @@ export default function Dashboard() {
             <Link href="/contacten" className="btn-cta">
               Contacten Beheren
             </Link>
+            <a href="/api/export" download="test.csv" className="btn-secondary">
+              Exporteer CSV
+            </a>
           </div>
         </>
       )}
