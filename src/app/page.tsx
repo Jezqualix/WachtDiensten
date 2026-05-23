@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Wachtdienst } from "@/lib/types";
 
+type DbStatus = { online: boolean; server: string; database: string } | null;
+
 export default function Dashboard() {
   const [diensten, setDiensten] = useState<Wachtdienst[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<DbStatus>(null);
 
   useEffect(() => {
     fetch("/api/wachtdiensten")
@@ -15,6 +18,11 @@ export default function Dashboard() {
         if (Array.isArray(data)) setDiensten(data);
       })
       .finally(() => setLoading(false));
+
+    fetch("/api/db-status")
+      .then((res) => res.json())
+      .then((data) => setDbStatus(data))
+      .catch(() => setDbStatus({ online: false, server: process.env.NEXT_PUBLIC_DB_SERVER || "onbekend", database: "onbekend" }));
   }, []);
 
   // Bepaal actieve diensten (meest recente per type)
@@ -31,7 +39,8 @@ export default function Dashboard() {
     const nu = new Date();
     return diensten
       .filter((d) => d.DienstType === type && new Date(d.StartDatum) > nu)
-      .sort((a, b) => new Date(a.StartDatum).getTime() - new Date(b.StartDatum).getTime())[0] || null;
+      .sort((a, b) => new Date(a.StartDatum).getTime() - new Date(b.StartDatum).getTime())
+      .slice(0, 3);
   }
 
   const garageActief = getActief("Garage");
@@ -123,30 +132,40 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div className="card">
               <span className="badge-garage mb-2">Garage</span>
-              {garageVolgende ? (
-                <>
-                  <p className="font-semibold mt-2">
-                    {garageVolgende.ContactNaam || garageVolgende.Telefoonnummer}
-                  </p>
-                  <p className="text-sm text-[var(--text-muted)]">
-                    {formatDatum(garageVolgende.StartDatum)}
-                  </p>
-                </>
+              {garageVolgende.length > 0 ? (
+                <ul className="mt-2 space-y-2">
+                  {garageVolgende.map((d) => (
+                    <li key={d.ID}>
+                      <p className="font-semibold">
+                        {d.ContactNaam || d.Telefoonnummer}
+                        {d.ContactNaam && (
+                          <span className="font-normal"> ({d.Telefoonnummer})</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
               )}
             </div>
             <div className="card">
               <span className="badge-app mb-2">App</span>
-              {appVolgende ? (
-                <>
-                  <p className="font-semibold mt-2">
-                    {appVolgende.ContactNaam || appVolgende.Telefoonnummer}
-                  </p>
-                  <p className="text-sm text-[var(--text-muted)]">
-                    {formatDatum(appVolgende.StartDatum)}
-                  </p>
-                </>
+              {appVolgende.length > 0 ? (
+                <ul className="mt-2 space-y-2">
+                  {appVolgende.map((d) => (
+                    <li key={d.ID}>
+                      <p className="font-semibold">
+                        {d.ContactNaam || d.Telefoonnummer}
+                        {d.ContactNaam && (
+                          <span className="font-normal"> ({d.Telefoonnummer})</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
               )}
@@ -166,6 +185,21 @@ export default function Dashboard() {
             </a>
           </div>
         </>
+      )}
+
+      {/* DB status badge - rechtsonder */}
+      {dbStatus && (
+        <div
+          className="fixed bottom-4 right-4 z-50 px-3 py-2 rounded-lg text-xs font-mono shadow-lg border"
+          style={
+            dbStatus.online
+              ? { backgroundColor: "#f0fdf4", borderColor: "#86efac", color: "#166534" }
+              : { backgroundColor: "#fef2f2", borderColor: "#fca5a5", color: "#991b1b" }
+          }
+        >
+          Database <strong>{dbStatus.database}</strong> op server <strong>{dbStatus.server}</strong> is{" "}
+          <strong>{dbStatus.online ? "online" : "offline"}</strong>
+        </div>
       )}
     </div>
   );
