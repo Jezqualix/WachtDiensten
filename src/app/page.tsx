@@ -132,43 +132,47 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
             <div className="card">
               <span className="badge-garage mb-2">Garage</span>
-              {garageVolgende.length > 0 ? (
-                <ul className="mt-2 space-y-2">
-                  {garageVolgende.map((d) => (
-                    <li key={d.ID}>
-                      <p className="font-semibold">
-                        {d.ContactNaam || d.Telefoonnummer}
-                        {d.ContactNaam && (
-                          <span className="font-normal"> ({d.Telefoonnummer})</span>
-                        )}
-                      </p>
-                      <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
-              )}
+              <ul className="mt-2 space-y-2">
+                {garageVolgende.map((d) => (
+                  <li key={d.ID}>
+                    <p className="font-semibold">
+                      {d.ContactNaam || d.Telefoonnummer}
+                      {d.ContactNaam && (
+                        <span className="font-normal"> ({d.Telefoonnummer})</span>
+                      )}
+                    </p>
+                    <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
+                  </li>
+                ))}
+                {garageVolgende.length === 0 && (
+                  <li className="font-semibold text-lg text-red-600" style={{ animation: 'blink 1s linear infinite' }}>Wachtdienstlijst leeg!</li>
+                )}
+                {garageVolgende.length > 0 && garageVolgende.length < 3 && (
+                  <li className="font-semibold text-red-600">Wachtdienstlijst bijna leeg!</li>
+                )}
+              </ul>
             </div>
             <div className="card">
               <span className="badge-app mb-2">App</span>
-              {appVolgende.length > 0 ? (
-                <ul className="mt-2 space-y-2">
-                  {appVolgende.map((d) => (
-                    <li key={d.ID}>
-                      <p className="font-semibold">
-                        {d.ContactNaam || d.Telefoonnummer}
-                        {d.ContactNaam && (
-                          <span className="font-normal"> ({d.Telefoonnummer})</span>
-                        )}
-                      </p>
-                      <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-[var(--text-muted)] mt-2">Geen geplande wijziging</p>
-              )}
+              <ul className="mt-2 space-y-2">
+                {appVolgende.map((d) => (
+                  <li key={d.ID}>
+                    <p className="font-semibold">
+                      {d.ContactNaam || d.Telefoonnummer}
+                      {d.ContactNaam && (
+                        <span className="font-normal"> ({d.Telefoonnummer})</span>
+                      )}
+                    </p>
+                    <p className="text-sm text-[var(--text-muted)]">{formatDatum(d.StartDatum)}</p>
+                  </li>
+                ))}
+                {appVolgende.length === 0 && (
+                  <li className="font-semibold text-lg text-red-600" style={{ animation: 'blink 1s linear infinite' }}>Wachtdienstlijst leeg!</li>
+                )}
+                {appVolgende.length > 0 && appVolgende.length < 3 && (
+                  <li className="font-semibold text-red-600">Wachtdienstlijst bijna leeg!</li>
+                )}
+              </ul>
             </div>
           </div>
 
