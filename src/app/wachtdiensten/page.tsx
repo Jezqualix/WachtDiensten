@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import DatePicker, { registerLocale } from "react-datepicker";
 import { nl } from "date-fns/locale/nl";
 import "react-datepicker/dist/react-datepicker.css";
@@ -23,6 +23,15 @@ export default function WachtdienstenPage() {
   const [telefoon, setTelefoon] = useState("");
   const [opmerkingen, setOpmerkingen] = useState("");
   const [formError, setFormError] = useState("");
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    overschreven: number;
+    overgeslagen: number;
+    nieuweContacten: number;
+    errors: { rij: number; fout: string }[];
+  } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function fetchData() {
     try {
@@ -115,6 +124,33 @@ export default function WachtdienstenPage() {
       fetchData();
     } catch {
       setFormError("Netwerkfout");
+    }
+  }
+
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    setImportResult(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/import", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Import mislukt");
+      } else {
+        setImportResult(data);
+        fetchData();
+      }
+    } catch {
+      setError("Netwerkfout bij import");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
@@ -211,16 +247,64 @@ export default function WachtdienstenPage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-brand-900">Wachtdiensten Planning</h1>
-        <button
-          onClick={() => {
-            resetForm();
-            setShowForm(!showForm);
-          }}
-          className="btn-cta"
-        >
-          {showForm ? "Annuleren" : "+ Nieuwe Wachtdienst"}
-        </button>
+        <div className="flex gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            ref={fileInputRef}
+            onChange={handleImport}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="btn-secondary"
+            disabled={importing}
+          >
+            {importing ? "Importeren..." : "Importeer CSV"}
+          </button>
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(!showForm);
+            }}
+            className="btn-cta"
+          >
+            {showForm ? "Annuleren" : "+ Nieuwe Wachtdienst"}
+          </button>
+        </div>
       </div>
+
+      {importResult && (
+        <div
+          className={`border rounded-md px-4 py-3 mb-4 ${
+            importResult.errors.length === 0
+              ? "bg-green-50 border-green-200 text-green-700"
+              : "bg-yellow-50 border-yellow-200 text-yellow-700"
+          }`}
+        >
+          <p className="font-medium">
+            {importResult.imported} nieuw geïmporteerd
+            {importResult.overschreven > 0 &&
+              `, ${importResult.overschreven} overschreven`}
+            {importResult.overgeslagen > 0 &&
+              `, ${importResult.overgeslagen} zonder wissel overgeslagen`}
+            {importResult.errors.length > 0
+              ? `, ${importResult.errors.length} met fout`
+              : "."}
+            {importResult.nieuweContacten > 0 &&
+              ` ${importResult.nieuweContacten} onbekend(e) nummer(s) als nieuw contact aangemaakt — hernoem deze in Contacten.`}
+          </p>
+          {importResult.errors.length > 0 && (
+            <ul className="mt-1 text-sm list-disc list-inside">
+              {importResult.errors.map((e, i) => (
+                <li key={i}>
+                  Rij {e.rij}: {e.fout}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (

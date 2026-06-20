@@ -10,7 +10,7 @@ export async function GET() {
       SELECT w.*, c.Naam AS ContactNaam
       FROM Wachtdiensten w
       LEFT JOIN Contacten c ON w.Telefoonnummer = c.Telefoonnummer
-      ORDER BY w.DienstType, w.StartDatum DESC
+      ORDER BY w.DienstType, w.StartDatum ASC
     `);
     return NextResponse.json(result.recordset);
   } catch (error) {
