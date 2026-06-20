@@ -33,6 +33,11 @@ export default function WachtdienstenPage() {
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Paginering: 10 records per tabel
+  const PER_PAGINA = 10;
+  const [garagePagina, setGaragePagina] = useState(0);
+  const [appPagina, setAppPagina] = useState(0);
+
   async function fetchData() {
     try {
       const [dRes, cRes] = await Promise.all([
@@ -180,7 +185,19 @@ export default function WachtdienstenPage() {
     return `${dag}/${maand}/${jaar} ${uur}:${min}`;
   }
 
-  function renderDienstTabel(items: Wachtdienst[], label: string, badgeClass: string) {
+  function renderDienstTabel(
+    items: Wachtdienst[],
+    label: string,
+    badgeClass: string,
+    pagina: number,
+    setPagina: (p: number) => void
+  ) {
+    const aantalPaginas = Math.ceil(items.length / PER_PAGINA);
+    // Clamp: na verwijderen kan pagina buiten bereik vallen
+    const huidigePagina = Math.min(pagina, Math.max(0, aantalPaginas - 1));
+    const start = huidigePagina * PER_PAGINA;
+    const zichtbaar = items.slice(start, start + PER_PAGINA);
+
     return (
       <div className="mb-8">
         <h2 className="text-lg font-semibold text-brand-800 mb-3 flex items-center gap-2">
@@ -192,52 +209,75 @@ export default function WachtdienstenPage() {
             Geen {label.toLowerCase()} wachtdiensten gepland.
           </div>
         ) : (
-          <div className="card overflow-x-auto p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-brand-600 text-white">
-                  <th className="text-left px-4 py-3 font-semibold">Startdatum</th>
-                  <th className="text-left px-4 py-3 font-semibold">Contact</th>
-                  <th className="text-left px-4 py-3 font-semibold">Telefoonnummer</th>
-                  <th className="text-left px-4 py-3 font-semibold">Opmerkingen</th>
-                  <th className="text-right px-4 py-3 font-semibold">Acties</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((dienst, i) => (
-                  <tr
-                    key={dienst.ID}
-                    className={`border-b border-[var(--border)] ${
-                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-brand-50 transition-colors`}
-                  >
-                    <td className="px-4 py-3">{formatDatum(dienst.StartDatum)}</td>
-                    <td className="px-4 py-3 font-medium">
-                      {dienst.ContactNaam || "—"}
-                    </td>
-                    <td className="px-4 py-3 font-mono">{dienst.Telefoonnummer}</td>
-                    <td className="px-4 py-3 text-[var(--text-muted)]">
-                      {dienst.Opmerkingen || "—"}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => startEdit(dienst)}
-                        className="text-brand-600 hover:text-brand-800 font-medium mr-3"
-                      >
-                        Bewerken
-                      </button>
-                      <button
-                        onClick={() => handleDelete(dienst.ID)}
-                        className="text-red-600 hover:text-red-800 font-medium"
-                      >
-                        Verwijderen
-                      </button>
-                    </td>
+          <>
+            <div className="card overflow-x-auto p-0">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-brand-600 text-white">
+                    <th className="text-left px-4 py-3 font-semibold">Startdatum</th>
+                    <th className="text-left px-4 py-3 font-semibold">Contact</th>
+                    <th className="text-left px-4 py-3 font-semibold">Telefoonnummer</th>
+                    <th className="text-left px-4 py-3 font-semibold">Opmerkingen</th>
+                    <th className="text-right px-4 py-3 font-semibold">Acties</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {zichtbaar.map((dienst, i) => (
+                    <tr
+                      key={dienst.ID}
+                      className={`border-b border-[var(--border)] ${
+                        i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-brand-50 transition-colors`}
+                    >
+                      <td className="px-4 py-3">{formatDatum(dienst.StartDatum)}</td>
+                      <td className="px-4 py-3 font-medium">
+                        {dienst.ContactNaam || "—"}
+                      </td>
+                      <td className="px-4 py-3 font-mono">{dienst.Telefoonnummer}</td>
+                      <td className="px-4 py-3 text-[var(--text-muted)]">
+                        {dienst.Opmerkingen || "—"}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          onClick={() => startEdit(dienst)}
+                          className="text-brand-600 hover:text-brand-800 font-medium mr-3"
+                        >
+                          Bewerken
+                        </button>
+                        <button
+                          onClick={() => handleDelete(dienst.ID)}
+                          className="text-red-600 hover:text-red-800 font-medium"
+                        >
+                          Verwijderen
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {aantalPaginas > 1 && (
+              <div className="flex items-center justify-between mt-3 text-sm">
+                <button
+                  onClick={() => setPagina(huidigePagina - 1)}
+                  disabled={huidigePagina === 0}
+                  className="text-brand-600 hover:text-brand-800 font-medium disabled:text-gray-300 disabled:cursor-not-allowed"
+                >
+                  ← Vorige
+                </button>
+                <span className="text-[var(--text-muted)]">
+                  {start + 1}–{Math.min(start + PER_PAGINA, items.length)} van {items.length}
+                </span>
+                <button
+                  onClick={() => setPagina(huidigePagina + 1)}
+                  disabled={huidigePagina >= aantalPaginas - 1}
+                  className="text-brand-600 hover:text-brand-800 font-medium disabled:text-gray-300 disabled:cursor-not-allowed"
+                >
+                  Volgende →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -437,8 +477,8 @@ export default function WachtdienstenPage() {
         <div className="text-center py-12 text-[var(--text-muted)]">Laden...</div>
       ) : (
         <>
-          {renderDienstTabel(garageDiensten, "Garage", "badge-garage")}
-          {renderDienstTabel(appDiensten, "App", "badge-app")}
+          {renderDienstTabel(garageDiensten, "Garage", "badge-garage", garagePagina, setGaragePagina)}
+          {renderDienstTabel(appDiensten, "App", "badge-app", appPagina, setAppPagina)}
         </>
       )}
     </div>
